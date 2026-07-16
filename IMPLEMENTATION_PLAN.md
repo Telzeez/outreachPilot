@@ -1,10 +1,10 @@
 # Implementation Plan: OutreachPilot
 
 ## Phase 1: Foundation & Setup
-- [ ] Task 1.1: Scaffold Next.js (App Router, TypeScript, Tailwind) frontend and NestJS backend as separate apps in a single repo (npm/pnpm workspaces).
-- [ ] Task 1.2: Configure PostgreSQL and Drizzle (or Prisma) schema per Technical Design; verify connectivity from NestJS.
-- [ ] Task 1.3: Set up Redis + BullMQ and confirm a trivial job runs end-to-end.
-- [ ] Task 1.4: Implement auth (Auth.js or Lucia) with login/signup pages.
+- [x] Task 1.1: Scaffold Next.js (App Router, TypeScript, Tailwind) frontend and NestJS backend as separate apps in a single repo (npm/pnpm workspaces).
+- [x] Task 1.2: Configure PostgreSQL and Drizzle (or Prisma) schema per Technical Design; verify connectivity from NestJS.
+- [x] Task 1.3: Set up Redis + BullMQ and confirm a trivial job runs end-to-end.
+- [x] Task 1.4: Implement auth (Auth.js or Lucia) with login/signup pages.
 
 ## Phase 2: Data Ingestion
 - [ ] Task 2.1: Build the `boards` module — integrate one public job-board API (e.g. Remote OK) as a scheduled BullMQ job that upserts Company + Lead records.

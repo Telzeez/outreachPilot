@@ -5,10 +5,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DbModule } from './db/db.module';
 import { QueueModule } from './queue/queue.module';
+import { BoardsModule } from './boards/boards.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    DbModule,
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -17,8 +19,8 @@ import { QueueModule } from './queue/queue.module';
         },
       }),
     }),
-    DbModule,
     QueueModule,
+    BoardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

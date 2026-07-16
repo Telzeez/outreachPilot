@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, pgEnum, primaryKey, integer, boolean } from 'drizzle-orm/pg-core';
 import { createId } from '@paralleldrive/cuid2';
 
 export const stageEnum = pgEnum('stage', ['NEW', 'CONTACTED', 'REPLIED', 'CALL_BOOKED', 'WON', 'LOST']);
@@ -9,12 +9,14 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   name: text('name'),
   emailProvider: text('email_provider'),
+  emailVerified: timestamp('emailVerified', { mode: 'date' }),
+  image: text('image'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 export const companies = pgTable('companies', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
-  name: text('name').notNull(),
+  name: text('name').notNull().unique(),
   website: text('website'),
   source: text('source').notNull(),
   notes: text('notes'),
@@ -46,3 +48,49 @@ export const outreachMessages = pgTable('outreach_messages', {
   status: msgStatusEnum('status').default('PENDING_REVIEW').notNull(),
   sentAt: timestamp('sent_at'),
 });
+
+export const accounts = pgTable(
+  'account',
+  {
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    provider: text('provider').notNull(),
+    providerAccountId: text('providerAccountId').notNull(),
+    refresh_token: text('refresh_token'),
+    access_token: text('access_token'),
+    expires_at: integer('expires_at'),
+    token_type: text('token_type'),
+    scope: text('scope'),
+    id_token: text('id_token'),
+    session_state: text('session_state'),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  })
+);
+
+export const sessions = pgTable('session', {
+  sessionToken: text('sessionToken').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
+});
+
+export const verificationTokens = pgTable(
+  'verificationToken',
+  {
+    identifier: text('identifier').notNull(),
+    token: text('token').notNull(),
+    expires: timestamp('expires', { mode: 'date' }).notNull(),
+  },
+  (verificationToken) => ({
+    compositePk: primaryKey({
+      columns: [verificationToken.identifier, verificationToken.token],
+    }),
+  })
+);

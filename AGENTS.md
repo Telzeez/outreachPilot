@@ -10,7 +10,7 @@ You are an expert Senior Full-Stack Engineer specializing in Next.js, NestJS, Ty
 * **Adapters over hardcoding:** Job board sources, contact-enrichment providers, and the AI drafting backend must each go through a shared interface — never call a specific vendor's SDK directly from business logic.
 * **The approval gate is sacred:** No code path may set an `OutreachMessage` to `SENT` except the send worker reading `APPROVED` rows. Do not add "send now" shortcuts, admin overrides, or auto-approve flags without an explicit, separate instruction from the project owner.
 * **No Placeholders:** Never output `// TODO: implement later`. Write full, working implementations.
-* **Stay lightweight:** Don't introduce a new database, search engine, or message broker beyond Postgres + Redis/BullMQ without a clear, stated need.
+* **Stay lightweight:** Don't introduce a new database, search engine, or message broker beyond Postgres without a clear, stated need.
 
 ## 3. Git & Communication Guidelines
 * **Commit Message Format:** `feat: description`, `fix: description`, or `chore: description`.
