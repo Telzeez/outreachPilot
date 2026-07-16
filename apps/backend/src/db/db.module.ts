@@ -18,6 +18,14 @@ export const DRIZZLE = Symbol('drizzle-connection');
           connectionString,
         });
 
+        // Verify connectivity
+        try {
+          await pool.query('SELECT 1');
+          console.log('Successfully connected to the database');
+        } catch (error) {
+          console.error('Failed to connect to the database. Ensure Postgres is running and the credentials in .env are correct:', error.message);
+        }
+
         return drizzle(pool, { schema });
       },
     },
