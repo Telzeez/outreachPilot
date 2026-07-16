@@ -6,6 +6,9 @@ import { AppService } from './app.service';
 import { DbModule } from './db/db.module';
 import { QueueModule } from './queue/queue.module';
 import { BoardsModule } from './boards/boards.module';
+import { LeadsModule } from './leads/leads.module';
+import { CompaniesModule } from './companies/companies.module';
+import { OutreachModule } from './outreach/outreach.module';
 
 @Module({
   imports: [
@@ -21,6 +24,9 @@ import { BoardsModule } from './boards/boards.module';
     }),
     QueueModule,
     BoardsModule,
+    LeadsModule,
+    CompaniesModule,
+    OutreachModule,
   ],
   controllers: [AppController],
   providers: [AppService],

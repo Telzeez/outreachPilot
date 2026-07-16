@@ -16,10 +16,13 @@ import { BoardsController } from './boards.controller';
   providers: [
     BoardsService,
     BoardIngestProcessor,
+    RemoteOkSource,
     {
       provide: BOARD_SOURCE,
-      useClass: RemoteOkSource,
-      multi: true, // Allows us to inject an array of BoardSources
+      useFactory: (remoteOk: RemoteOkSource) => {
+        return [remoteOk];
+      },
+      inject: [RemoteOkSource],
     },
   ],
 })
