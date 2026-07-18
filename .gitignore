@@ -8,3 +8,12 @@ node_modules
 dist
 .next
 coverage
+.vercel
+.env*
+
+# Agent Documents
+TECHNICAL_DESIGN.md
+PRD.md
+IMPLEMENTATION_PLAN.md
+TESTING_CICD.md
+AGENTS.md
