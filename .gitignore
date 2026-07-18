@@ -17,3 +17,5 @@ PRD.md
 IMPLEMENTATION_PLAN.md
 TESTING_CICD.md
 AGENTS.md
+# Google Auth
+client_secret.json

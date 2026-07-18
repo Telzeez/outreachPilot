@@ -9,9 +9,9 @@ export class OllamaLlmProvider implements LlmProvider {
   private readonly apiUrl: string;
   private readonly model: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(private configService: ConfigService, dynamicModel?: string) {
     this.apiUrl = this.configService.get<string>('OLLAMA_API_URL') || 'http://localhost:11434/api/generate';
-    this.model = this.configService.get<string>('OLLAMA_MODEL') || 'llama3';
+    this.model = dynamicModel || this.configService.get<string>('OLLAMA_MODEL') || 'llama3';
   }
 
   async generateDraft(prompt: string): Promise<string> {

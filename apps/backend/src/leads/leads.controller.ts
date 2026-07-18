@@ -11,6 +11,19 @@ export class LeadsController {
     return this.leadsService.getAllLeads();
   }
 
+  @Get('stats')
+  async getStats() {
+    return this.leadsService.getStats();
+  }
+
+  @Get(':id')
+  async getLeadById(@Param('id') id: string) {
+    if (!id) {
+      throw new BadRequestException('Lead ID is required');
+    }
+    return this.leadsService.getLeadById(id);
+  }
+
   @Post()
   async createLead(@Body() dto: CreateLeadDto) {
     if (!dto.companyName) {

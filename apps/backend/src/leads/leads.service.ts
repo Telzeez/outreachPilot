@@ -2,8 +2,8 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DRIZZLE } from '../db/db.module';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq, desc } from 'drizzle-orm';
-import { companies, leads, users, contacts } from '../db/schema';
+import { eq, desc, gte, sql, inArray } from 'drizzle-orm';
+import { companies, leads, users, contacts, outreachMessages } from '../db/schema';
 import * as xlsx from 'xlsx';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -22,6 +22,7 @@ export class UpdateLeadDto {
   notes?: string;
   contactName?: string;
   contactEmail?: string;
+  stage?: 'NEW' | 'CONTACTED' | 'REPLIED' | 'CALL_BOOKED' | 'WON' | 'LOST';
 }
 
 @Injectable()
@@ -55,8 +56,8 @@ export class LeadsService {
   async getAllLeads() {
     const adminUser = await this.getAdminUser();
     
-    // Join leads with companies and contacts
-    const results = await this.db.select({
+    // Join leads with companies, contacts, and outreachMessages
+    const leadsData = await this.db.select({
       leadId: leads.id,
       stage: leads.stage,
       createdAt: leads.createdAt,
@@ -64,14 +65,115 @@ export class LeadsService {
       website: companies.website,
       contactName: contacts.name,
       contactEmail: contacts.email,
+      messageStatus: outreachMessages.status,
     })
     .from(leads)
     .innerJoin(companies, eq(leads.companyId, companies.id))
     .leftJoin(contacts, eq(leads.contactId, contacts.id))
+    .leftJoin(outreachMessages, eq(leads.id, outreachMessages.leadId))
     .where(eq(leads.userId, adminUser.id))
-    .orderBy(desc(leads.createdAt));
+    .orderBy(desc(leads.createdAt), desc(outreachMessages.id));
 
-    return results;
+    // Deduplicate leads, keeping only the latest message status
+    const uniqueLeads = [];
+    const seen = new Set();
+    for (const row of leadsData) {
+      if (!seen.has(row.leadId)) {
+        seen.add(row.leadId);
+        uniqueLeads.push(row);
+      }
+    }
+    
+    return uniqueLeads;
+  }
+
+  async getStats() {
+    const adminUser = await this.getAdminUser();
+
+    // 1. Weekly Target from User settings
+    const weeklyTarget = adminUser.weeklyTarget || 100;
+
+    // 2. Weekly Outreach Volume (messages sent in the last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const weeklySentQuery = await this.db.select({ count: sql<number>`count(*)` })
+      .from(outreachMessages)
+      .innerJoin(leads, eq(outreachMessages.leadId, leads.id))
+      .where(
+        sql`${leads.userId} = ${adminUser.id} AND ${outreachMessages.status} = 'SENT' AND ${outreachMessages.sentAt} >= ${sevenDaysAgo}`
+      );
+    const weeklyVolume = Number(weeklySentQuery[0]?.count || 0);
+
+    // Target Progress
+    const targetProgress = Math.min(Math.round((weeklyVolume / weeklyTarget) * 100), 100);
+
+    // 3. Response Rate
+    const statsQuery = await this.db.select({
+      totalContacted: sql<number>`SUM(CASE WHEN ${leads.stage} != 'NEW' THEN 1 ELSE 0 END)`,
+      totalReplied: sql<number>`SUM(CASE WHEN ${leads.stage} IN ('REPLIED', 'CALL_BOOKED', 'WON') THEN 1 ELSE 0 END)`
+    }).from(leads).where(eq(leads.userId, adminUser.id));
+    
+    const totalContacted = Number(statsQuery[0]?.totalContacted || 0);
+    const totalReplied = Number(statsQuery[0]?.totalReplied || 0);
+    const responseRate = totalContacted > 0 ? Math.round((totalReplied / totalContacted) * 100) : 0;
+
+    // 4. Leads by Source
+    const sourceQuery = await this.db.select({
+      source: companies.source,
+      count: sql<number>`count(${leads.id})`
+    })
+    .from(leads)
+    .innerJoin(companies, eq(leads.companyId, companies.id))
+    .where(eq(leads.userId, adminUser.id))
+    .groupBy(companies.source);
+
+    const leadsBySource = sourceQuery.map(row => ({
+      source: row.source,
+      count: Number(row.count)
+    })).sort((a, b) => b.count - a.count);
+
+    return {
+      weeklyTarget,
+      weeklyVolume,
+      targetProgress,
+      responseRate,
+      leadsBySource
+    };
+  }
+
+  async getLeadById(id: string) {
+    const adminUser = await this.getAdminUser();
+
+    const results = await this.db.select({
+      leadId: leads.id,
+      stage: leads.stage,
+      createdAt: leads.createdAt,
+      companyName: companies.name,
+      website: companies.website,
+      notes: companies.notes,
+      contactName: contacts.name,
+      contactEmail: contacts.email,
+      contactRole: contacts.role,
+    })
+    .from(leads)
+    .innerJoin(companies, eq(leads.companyId, companies.id))
+    .leftJoin(contacts, eq(leads.contactId, contacts.id))
+    .where(eq(leads.id, id));
+
+    if (results.length === 0) {
+      throw new Error('Lead not found');
+    }
+
+    const leadInfo = results[0];
+
+    // Fetch the draft message if any
+    const msgs = await this.db.select().from(outreachMessages).where(eq(outreachMessages.leadId, id)).orderBy(desc(outreachMessages.id));
+
+    return {
+      ...leadInfo,
+      message: msgs.length > 0 ? msgs[0] : null,
+    };
   }
 
   async createLead(dto: CreateLeadDto, source: string = 'manual') {
@@ -234,6 +336,11 @@ export class LeadsService {
         
         await this.db.update(leads).set({ contactId: newContact.id }).where(eq(leads.id, leadId));
       }
+    }
+
+    // Update Lead Stage
+    if (dto.stage) {
+      await this.db.update(leads).set({ stage: dto.stage }).where(eq(leads.id, leadId));
     }
 
     return { status: 'updated', leadId };

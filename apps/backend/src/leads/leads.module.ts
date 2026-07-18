@@ -14,5 +14,6 @@ import { LeadsController } from './leads.controller';
   ],
   controllers: [LeadsController],
   providers: [LeadsService],
+  exports: [LeadsService],
 })
 export class LeadsModule {}

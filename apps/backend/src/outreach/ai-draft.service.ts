@@ -1,19 +1,39 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { LLM_PROVIDER } from './llm/llm-provider.interface';
 import type { LlmProvider } from './llm/llm-provider.interface';
 import { DRIZZLE } from '../db/db.module';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { companies, contacts, leads, outreachMessages } from '../db/schema';
+import { companies, contacts, leads, outreachMessages, users } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { SettingsService } from '../settings/settings.service';
+import { MockLlmProvider } from './llm/providers/mock.provider';
+import { OllamaLlmProvider } from './llm/providers/ollama.provider';
+import { OpenAILlmProvider } from './llm/providers/openai.provider';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AiDraftService {
   private readonly logger = new Logger(AiDraftService.name);
 
   constructor(
-    @Inject(LLM_PROVIDER) private readonly llmProvider: LlmProvider,
     @Inject(DRIZZLE) private readonly db: NodePgDatabase<any>,
+    private readonly settingsService: SettingsService,
+    private readonly configService: ConfigService,
   ) {}
+
+  private async getLlmProvider(): Promise<LlmProvider> {
+    const settings = await this.settingsService.getDecryptedSettings();
+    
+    if (settings.llmProvider === 'openai') {
+      return new OpenAILlmProvider(settings.llmApiKey, settings.llmModel);
+    } else if (settings.llmProvider === 'nvidia') {
+      return new OpenAILlmProvider(settings.llmApiKey, settings.llmModel || 'meta/llama3-70b-instruct', 'https://integrate.api.nvidia.com/v1');
+    } else if (settings.llmProvider === 'ollama') {
+      return new OllamaLlmProvider(this.configService, settings.llmModel);
+    }
+    
+    // Fallback
+    return new MockLlmProvider();
+  }
 
   async generateDraftForLead(leadId: string) {
     this.logger.log(`Starting draft generation for lead: ${leadId}`);
@@ -26,10 +46,12 @@ export class AiDraftService {
       companyNotes: companies.notes,
       contactName: contacts.name,
       contactRole: contacts.role,
+      userName: users.name,
     })
     .from(leads)
     .innerJoin(companies, eq(leads.companyId, companies.id))
     .leftJoin(contacts, eq(leads.contactId, contacts.id))
+    .leftJoin(users, eq(leads.userId, users.id))
     .where(eq(leads.id, leadId));
 
     if (!leadRecords.length) {
@@ -46,12 +68,15 @@ export class AiDraftService {
       ${data.contactRole ? `Their role is: ${data.contactRole}.` : ''}
       ${data.companyNotes ? `Additional context about the company: ${data.companyNotes}` : ''}
       
+      Sign off the email using this name: ${data.userName || 'The OutreachPilot Team'}.
+      
       Keep it under 100 words. Focus on a simple introduction and a low-friction call to action (e.g., asking for a 10 min chat).
     `;
 
     try {
       // 3. Generate Draft using LLM
-      const draftContent = await this.llmProvider.generateDraft(prompt);
+      const llmProvider = await this.getLlmProvider();
+      const draftContent = await llmProvider.generateDraft(prompt);
       
       // 4. Save to Database
       await this.db.insert(outreachMessages).values({

@@ -1,31 +1,35 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { AiDraftService } from './ai-draft.service';
 import { DraftingProcessor } from './drafting.processor';
-import { LLM_PROVIDER } from './llm/llm-provider.interface';
-import { MockLlmProvider } from './llm/providers/mock.provider';
-import { OllamaLlmProvider } from './llm/providers/ollama.provider';
+import { SendingProcessor } from './sending.processor';
+import { OutreachController } from './outreach.controller';
+import { OutreachService } from './outreach.service';
+import { DigestService } from './digest.service';
+import { LeadsModule } from '../leads/leads.module';
 
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'drafting',
     }),
+    BullModule.registerQueue({
+      name: 'sending',
+    }),
     ConfigModule,
+    LeadsModule,
+  ],
+  controllers: [
+    OutreachController,
   ],
   providers: [
     AiDraftService,
     DraftingProcessor,
-    {
-      provide: LLM_PROVIDER,
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const useOllama = configService.get<string>('USE_OLLAMA') === 'true';
-        return useOllama ? new OllamaLlmProvider(configService) : new MockLlmProvider();
-      },
-    },
+    SendingProcessor,
+    OutreachService,
+    DigestService,
   ],
-  exports: [BullModule], // Export BullModule so other modules can inject the 'drafting' queue
+  exports: [BullModule], // Export BullModule so other modules can inject the 'drafting' and 'sending' queues
 })
 export class OutreachModule {}

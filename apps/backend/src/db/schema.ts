@@ -11,6 +11,14 @@ export const users = pgTable('users', {
   emailProvider: text('email_provider'),
   emailVerified: timestamp('emailVerified', { mode: 'date' }),
   image: text('image'),
+  llmProvider: text('llm_provider'),
+  llmApiKey: text('llm_api_key'),
+  llmModel: text('llm_model'),
+  smtpHost: text('smtp_host'),
+  smtpPort: integer('smtp_port'),
+  smtpUser: text('smtp_user'),
+  smtpPass: text('smtp_pass'),
+  weeklyTarget: integer('weekly_target').default(100).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

@@ -12,6 +12,10 @@ export class MockLlmProvider implements LlmProvider {
     // Simulate generation delay
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    return `Hi there,\n\nI noticed your great work at your company and wanted to reach out. We specialize in helping teams scale their engineering efforts without overhead.\n\nWould you be open to a quick 10-minute chat next week to see if there's a mutual fit?\n\nBest,\nYour Name`;
+    // Extract the name from the prompt to make the mock personalized
+    const nameMatch = prompt.match(/using this name:\s*(.*?)\s*\n/i) || prompt.match(/using this name:\s*(.*)/i);
+    const signOffName = nameMatch ? nameMatch[1].trim().replace(/\.$/, '') : 'Your Name';
+
+    return `Hi there,\n\nI noticed your great work at your company and wanted to reach out. We specialize in helping teams scale their engineering efforts without overhead.\n\nWould you be open to a quick 10-minute chat next week to see if there's a mutual fit?\n\nBest,\n${signOffName}`;
   }
 }
