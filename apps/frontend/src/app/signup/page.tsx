@@ -24,7 +24,47 @@ export default async function SignUpPage() {
         </div>
 
         <form
-          className="mt-10 space-y-6"
+          className="mt-10 space-y-4"
+          action={async (formData) => {
+            "use server"
+            await signIn("nodemailer", { 
+              email: formData.get("email"), 
+              redirectTo: "/dashboard" 
+            })
+          }}
+        >
+          <div>
+            <label htmlFor="email" className="sr-only">Email address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="w-full px-4 py-3 border border-zinc-200 rounded-xl bg-zinc-50 text-black placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="name@company.com"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-transparent rounded-xl shadow-md bg-[#0D1F43] hover:bg-[#0A1835] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0D1F43] transition-all duration-300 active:scale-[0.98]"
+          >
+            <span className="text-sm font-bold text-white">Sign up with Email</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+          </button>
+        </form>
+
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-zinc-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-white text-zinc-500 font-medium">Or continue with</span>
+          </div>
+        </div>
+
+        <form
+          className="space-y-6"
           action={async () => {
             "use server"
             await signIn("google", { redirectTo: "/dashboard" })
