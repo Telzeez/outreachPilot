@@ -1,38 +1,70 @@
-Here's the practical setup:
+# OutreachPilot 🚀
 
-## 1. Put the docs in your project
-Create a new folder for the project (or open your existing repo in VS Code), and drop all six files at the **root** of the repo:
-```
-your-project/
-├── AGENTS.md
-├── PRD.md
-├── TECHNICAL_DESIGN.md
-├── IMPLEMENTATION_PLAN.md
-├── TESTING_CICD.md
-└── README.md
-```
-Root-level placement matters — coding agents look there first for project context.
+OutreachPilot is a lightweight, AI-powered cold outreach automation tool built for independent founders and small teams. It streamlines lead management, generates highly personalized outreach drafts using LLMs, and manages your pipeline through an intuitive Kanban interface.
 
-## 2. Install the Claude Code extension
-In VS Code: Extensions (Ctrl+Shift+X) → search "Claude Code" → install the one published by **Anthropic** (there are look-alikes, double-check the publisher). Sign in with any paid Claude plan (Pro/Max/Team/Enterprise) — no API key needed. Once installed, click the **Spark icon** in the editor toolbar or the Activity Bar to open the chat panel.
+## ✨ Features
 
-## 3. Point it at your docs
-`AGENTS.md` is exactly the convention Claude Code uses for standing project instructions, so it'll pick that up automatically. For the others, just @-mention them the first time so they're loaded into context, e.g.:
+- **Automated AI Drafting**: Automatically drafts personalized outreach messages for new leads using your configured LLM provider.
+- **Kanban Pipeline Board**: Drag-and-drop board to track leads from New → Contacted → Replied → Call Booked → Won/Lost.
+- **Review & Approve Gate**: Strict approval system ensuring no AI-generated draft is ever sent without explicit human review.
+- **SMTP Email Sending**: Connects directly to your own SMTP server (Gmail, Outlook, etc.) to send emails securely.
+- **Weekly Digest**: Automated background workers send you a weekly summary of your pipeline's performance.
+- **Mobile Responsive**: Fully optimized dashboard and list views for tracking leads on the go.
 
-```
-@PRD.md @TECHNICAL_DESIGN.md @IMPLEMENTATION_PLAN.md 
-Set up Phase 1, Task 1.1: scaffold the Next.js and NestJS apps per the technical design.
-```
+## 🛠️ Technology Stack
 
-Then work through `IMPLEMENTATION_PLAN.md` one task at a time — that's literally why it's broken into checkboxes. A good pattern:
-```
-@IMPLEMENTATION_PLAN.md Do Task 1.2 next. Follow AGENTS.md rules.
-```
+**Frontend:**
+- Next.js (App Router)
+- React Server Components
+- Tailwind CSS
 
-## 4. Review before accepting
-The extension shows inline diffs for every change — review and accept/reject rather than blanket auto-accepting, especially early on while the scaffolding is being laid down. You can toggle auto-accept later for trusted, repetitive steps.
+**Backend:**
+- NestJS
+- Postgres (Database)
+- Redis & BullMQ (Background Workers & Queues)
+- Drizzle ORM
 
-## 5. Let it run tests/lint itself
-Once you approve terminal access, it can run `npm run test`, `npm run lint`, etc. straight from `TESTING_CICD.md`'s commands — worth telling it explicitly to run those before marking a task done, since that's literally rule #1 in your CI doc.
+## 🚀 Getting Started
 
-One nice detail: if you ever end up with both a `CLAUDE.md` and `AGENTS.md`, Claude Code reads either, but keeping just `AGENTS.md` (as you have) avoids duplication/drift.
+### Prerequisites
+- Node.js (v18+)
+- Postgres Database
+- Redis Server
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Telzeez/outreachPilot.git
+   cd outreachPilot
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+   - Create a `.env` file in the `apps/backend` folder with your `DATABASE_URL` and `REDIS_URL`.
+   - Create a `.env.local` file in the `apps/frontend` folder and set `NEXT_PUBLIC_API_URL` to your backend URL (e.g., `http://localhost:3001`).
+
+4. **Run Database Migrations:**
+   ```bash
+   npm run db:push --workspace=apps/backend
+   ```
+
+5. **Start the Development Servers:**
+   ```bash
+   npm run dev
+   ```
+   *This concurrently starts both the Next.js frontend (port 3000) and NestJS backend (port 3001).*
+
+## 🌍 Deployment
+
+OutreachPilot is structured as a monorepo and is pre-configured for modern hosting platforms:
+- **Frontend**: Deploy to Vercel simply by linking the GitHub repository (the root `vercel.json` automatically handles routing to the frontend app).
+- **Backend API**: Deploy to Railway. A `railway.toml` is included to automatically run builds and push database schema updates on startup.
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
