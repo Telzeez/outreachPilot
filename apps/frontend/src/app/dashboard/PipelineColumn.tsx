@@ -4,7 +4,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import PipelineCard from "./PipelineCard";
 
-export default function PipelineColumn({ id, title, leads }: { id: string, title: string, leads: any[] }) {
+export default function PipelineColumn({ id, title, leads, onMoveLead }: { id: string, title: string, leads: any[], onMoveLead: (leadId: string, newStage: string) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
   return (
@@ -20,7 +20,7 @@ export default function PipelineColumn({ id, title, leads }: { id: string, title
       >
         <SortableContext items={leads.map(l => l.leadId)} strategy={verticalListSortingStrategy}>
           {leads.map(lead => (
-            <PipelineCard key={lead.leadId} lead={lead} />
+            <PipelineCard key={lead.leadId} lead={lead} onMoveLead={onMoveLead} />
           ))}
         </SortableContext>
         

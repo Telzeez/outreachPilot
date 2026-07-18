@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-export default function PipelineCard({ lead }: { lead: any }) {
+export default function PipelineCard({ lead, onMoveLead }: { lead: any, onMoveLead?: (leadId: string, newStage: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lead.leadId });
 
   const style = {
@@ -34,6 +34,24 @@ export default function PipelineCard({ lead }: { lead: any }) {
         }`}>
           {lead.draftStatus?.replace('_', ' ') || 'NO DRAFT'}
         </span>
+        
+        {/* Mobile Stage Selector */}
+        {onMoveLead && (
+          <div className="md:hidden ml-2" onPointerDown={(e) => e.stopPropagation()}>
+            <select
+              value={lead.stage}
+              onChange={(e) => onMoveLead(lead.leadId, e.target.value)}
+              className="text-[10px] font-bold bg-zinc-100 text-zinc-700 border border-zinc-200 rounded-md px-1 py-1 outline-none"
+            >
+              <option value="NEW">New</option>
+              <option value="CONTACTED">Contacted</option>
+              <option value="REPLIED">Replied</option>
+              <option value="CALL_BOOKED">Call Booked</option>
+              <option value="WON">Won</option>
+              <option value="LOST">Lost</option>
+            </select>
+          </div>
+        )}
       </div>
     </div>
   );

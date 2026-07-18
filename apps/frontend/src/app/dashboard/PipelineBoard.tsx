@@ -80,6 +80,25 @@ export default function PipelineBoard({ initialLeads }: { initialLeads: any[] })
     }
   };
 
+  const handleMoveLead = async (leadId: string, newStage: string) => {
+    const lead = leads.find(l => l.leadId === leadId);
+    if (!lead || lead.stage === newStage) return;
+
+    setLeads(prev => prev.map(l => l.leadId === leadId ? { ...l, stage: newStage } : l));
+
+    try {
+      const res = await fetch(`http://localhost:3001/leads/${leadId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: newStage })
+      });
+      if (!res.ok) throw new Error("Failed to update lead stage");
+    } catch (err) {
+      console.error(err);
+      setLeads(prev => prev.map(l => l.leadId === leadId ? { ...l, stage: lead.stage } : l));
+    }
+  };
+
   const activeLead = activeId ? leads.find(l => l.leadId === activeId) : null;
 
   return (
@@ -97,6 +116,7 @@ export default function PipelineBoard({ initialLeads }: { initialLeads: any[] })
               id={stage.id}
               title={stage.title}
               leads={leads.filter(l => l.stage === stage.id)}
+              onMoveLead={handleMoveLead}
             />
           ))}
         </div>
