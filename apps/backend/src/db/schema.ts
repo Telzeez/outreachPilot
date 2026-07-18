@@ -4,13 +4,16 @@ import { createId } from '@paralleldrive/cuid2';
 export const stageEnum = pgEnum('stage', ['NEW', 'CONTACTED', 'REPLIED', 'CALL_BOOKED', 'WON', 'LOST']);
 export const msgStatusEnum = pgEnum('msg_status', ['PENDING_REVIEW', 'APPROVED', 'REJECTED', 'SENT']);
 
-export const users = pgTable('users', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+export const users = pgTable("users", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
   email: text('email').notNull().unique(),
   name: text('name'),
-  emailProvider: text('email_provider'),
   emailVerified: timestamp('emailVerified', { mode: 'date' }),
+  password: text('password'),
   image: text('image'),
+  emailProvider: text('email_provider'),
   llmProvider: text('llm_provider'),
   llmApiKey: text('llm_api_key'),
   llmModel: text('llm_model'),

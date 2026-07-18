@@ -25,8 +25,9 @@ export default async function LoginPage() {
           className="mt-10 space-y-4"
           action={async (formData) => {
             "use server"
-            await signIn("nodemailer", { 
+            await signIn("credentials", { 
               email: formData.get("email"), 
+              password: formData.get("password"),
               redirectTo: "/dashboard" 
             })
           }}
@@ -39,8 +40,18 @@ export default async function LoginPage() {
               type="email"
               autoComplete="email"
               required
-              className="w-full px-4 py-3 border border-zinc-200 rounded-xl bg-zinc-50 text-black placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-zinc-200 rounded-xl bg-zinc-50 text-black placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all mb-4"
               placeholder="name@company.com"
+            />
+            <label htmlFor="password" className="sr-only">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="w-full px-4 py-3 border border-zinc-200 rounded-xl bg-zinc-50 text-black placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Password"
             />
           </div>
           <button
